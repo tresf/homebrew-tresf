@@ -40,7 +40,7 @@ class Openjdk < Formula
     resource("boot-jdk").stage boot_jdk_dir
     boot_jdk = boot_jdk_dir/"Contents/Home"
     java_options = ENV.delete("_JAVA_OPTIONS")
-    framework = "/Applications/Xcode.app/Contents/SharedFrameworks/ContentDeliveryServices.framework/Versions/A/itms/java/Frameworks/JavaNativeFoundation.framework"
+    framework = File.expand_path("#{`xcode-select --print-path`}../../SharedFrameworks/ContentDeliveryServices.framework/Versions/A/itms/java/Frameworks/JavaNativeFoundation.framework")
 
     # Inspecting .hgtags to find a build number
     # The file looks like this:
