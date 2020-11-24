@@ -1,30 +1,8 @@
-=begin
-Notes from https://gist.github.com/claui/ea4248aa64d6a1b06c6d6ed80bc2d2b8#gistcomment-3535821
-
-if you want to build our jep-391 preview branch then use these configure arguments (assuming it's done on intel mac with Xcode12):
-
-sh configure
-[x] --with-boot-jdk=/path/to/some/jdk15_or16ea/for/intel
-[x] --with-build-jdk=/path/to/openjdk16ea/build/for/intel
-[x] --with-debug-level=release
-[x] --disable-warnings-as-errors
-[x] --openjdk-target=aarch64-apple-darwin
-[x] --with-extra-cflags='-arch arm64'
-[x] --with-extra-ldflags='-arch arm64 -F/path/to/Xcode.app//Contents/SharedFrameworks/ContentDeliveryServices.framework/Versions/A/itms/java/Frameworks/'
-[x] --with-extra-cxxflags='-arch arm64'
-
-make images
-
-then copy JavaNativeFoundation.framework to $JAVA_HOME/lib/
-
-p.s. build-jdk better be exact same version as the one you trying to build
-=end
-
 class Openjdk < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.java.net/"
   url "https://github.com/openjdk/jdk-sandbox/archive/a56ddad05cf1808342aeff1b1cd2b0568a6cdc3a.tar.gz"
-  version "16.0.0+10ea"
+  version "16"
   sha256 "29df31b5eefb5a6c016f50b2518ca29e8e61e3cfc676ed403214e1f13a78efd5"
   license :cannot_represent
 
@@ -64,24 +42,18 @@ class Openjdk < Formula
     java_options = ENV.delete("_JAVA_OPTIONS")
     framework = "/Applications/Xcode.app/Contents/SharedFrameworks/ContentDeliveryServices.framework/Versions/A/itms/java/Frameworks/JavaNativeFoundation.framework"
 
-    # Inspecting .hg_archival.txt to find a build number
+    # Inspecting .hgtags to find a build number
     # The file looks like this:
     #
-    # repo: fd16c54261b32be1aaedd863b7e856801b7f8543
-    # node: e3f940bd3c8fcdf4ca704c6eb1ac745d155859d5
-    # branch: default
-    # tag: jdk-15+36
-    # tag: jdk-15-ga
+    # fd07cdb26fc70243ef23d688b545514f4ddf1c2b jdk-16+13
+    # 36b29df125dc88f11657ce93b4998aa9ff5f5d41 jdk-16+14
     #
-    # Since openjdk has move their development from mercurial to git and GitHub
-    # this approach may need some changes in the future
-    #
-    build = File.read(".hg_archival.txt")
-                .scan(/^tag: jdk-#{version}\+(.+)$/)
+    build = File.read(".hgtags")
+                .scan(/ jdk-#{version}\+(.+)$/)
                 .map(&:first)
                 .map(&:to_i)
                 .max
-    raise "cannot find build number in .hg_archival.txt" if build.nil?
+    raise "cannot find build number in .hgtags" if build.nil?
 
     chmod 0755, "configure"
     system "./configure", "--without-version-pre",
