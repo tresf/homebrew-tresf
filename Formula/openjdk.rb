@@ -25,7 +25,7 @@ class Openjdk < Formula
   homepage "https://openjdk.java.net/"
   url "https://github.com/openjdk/jdk-sandbox/archive/a56ddad05cf1808342aeff1b1cd2b0568a6cdc3a.tar.gz"
   version "16.0.0+10ea"
-  sha256 "9c5be662f5b166b5c82c27de29b71f867cff3ff4570f4c8fa646490c4529135a"
+  sha256 "29df31b5eefb5a6c016f50b2518ca29e8e61e3cfc676ed403214e1f13a78efd5"
   license :cannot_represent
 
   bottle do
