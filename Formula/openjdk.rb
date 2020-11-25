@@ -37,16 +37,17 @@ class Openjdk < Formula
   
   resource "jnf-framework" do
     # Stop-gap from https://github.com/apple/openjdk/blob/da09ed7a30a557417d4b09e90e09964444a545a0/build.sh#L32
-    url "https://github.com/Homebrew/brew/files/5593429/JavaNativeFoundation.framework.zip"
-    sha256 "6d592aa74f25ec44f28523982311aca5a213eb473bdb01ec941559c4026db4d8"
+    url "https://github.com/Homebrew/brew/files/5593808/JavaNativeFoundation.framework.zip"
+    sha256 "4e66440df589714ca1445a589ed3e80844ff1197eb96b90cbe36b0df8078bf97"
   end
   
   def install
     boot_jdk_dir = Pathname.pwd/"boot-jdk"
     resource("boot-jdk").stage boot_jdk_dir
     boot_jdk = boot_jdk_dir/"Contents/Home"
-    framework = Pathname.pwd/"JavaNativeFoundation.framework"
-    resource("jnf-framework").stage framework
+    frameworks = Pathname.pwd/"Frameworks"
+    resource("jnf-framework").stage frameworks
+    jnf_framework = frameworks/"JavaNativeFoundation.framework"
 
     java_options = ENV.delete("_JAVA_OPTIONS")
     
@@ -79,9 +80,9 @@ class Openjdk < Formula
                           "--with-jvm-variants=server",
                           "--disable-warnings-as-errors",
                           "--openjdk-target=aarch64-apple-darwin",
-                          "--with-extra-cflags=-arch arm64 -F#{framework}",
-                          "--with-extra-ldflags=-arch arm64 -F#{framework}",
-                          "--with-extra-cxxflags=-arch arm64 -F#{framework}"
+                          "--with-extra-cflags=-arch arm64 -F#{frameworks}",
+                          "--with-extra-ldflags=-arch arm64 -F#{frameworks}",
+                          "--with-extra-cxxflags=-arch arm64 -F#{frameworks}"
 
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
     system "make", "images"
@@ -92,7 +93,7 @@ class Openjdk < Formula
     include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/*.h"]
     include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/darwin/*.h"]
     
-    FileUtils.copy_entry framework, "#{libexec}/openjdk.jdk/Contents/Home/lib/"
+    FileUtils.copy_entry jnf_framework, "#{libexec}/openjdk.jdk/Contents/Home/lib/"
   end
 
   def caveats
