@@ -34,13 +34,15 @@ class Openjdk < Formula
       sha256 "91310200f072045dc6cef2c8c23e7e6387b37c46e9de49623ce0fa461a24623d"
     end
   end
+  
+  def get_framework
+    File.expand_path("#{`xcode-select --print-path`}/../SharedFrameworks/ContentDeliveryServices.framework/Versions/Current/itms/java/Frameworks")
+  end
 
   def install
     boot_jdk_dir = Pathname.pwd/"boot-jdk"
     resource("boot-jdk").stage boot_jdk_dir
     boot_jdk = boot_jdk_dir/"Contents/Home"
-    frameworks = File.expand_path("#{`xcode-select --print-path`}/../SharedFrameworks/ContentDeliveryServices.framework/Versions/Current/itms/java/Frameworks")
-    $jnf_framework = "#{frameworks}/JavaNativeFoundation.framework"
 
     java_options = ENV.delete("_JAVA_OPTIONS")
     
@@ -74,7 +76,7 @@ class Openjdk < Formula
                           "--disable-warnings-as-errors",
                           "--openjdk-target=aarch64-apple-darwin",
                           "--with-extra-cflags=-arch arm64",
-                          "--with-extra-ldflags=-arch arm64 -F#{frameworks}",
+                          "--with-extra-ldflags=-arch arm64 -F#{get_framework()}",
                           "--with-extra-cxxflags=-arch arm64"
 
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
@@ -91,7 +93,7 @@ class Openjdk < Formula
     # post_install avoids signature corruption
     puts "Here1"
     puts $jnf_framework
-    libexec.install $jnf_framework => "openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework"
+    libexec.install "#{get_framework()}/JavaNativeFoundation.framework" => "openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework"
     puts "Here2"
   end
 
