@@ -93,7 +93,7 @@ class Openjdk < Formula
     # post_install avoids signature corruption
     puts "Here1"
     puts get_framework()
-    libexec.install "#{get_framework()}/JavaNativeFoundation.framework" => "openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework"
+    FileUtils.cp_r "#{get_framework()}/JavaNativeFoundation.framework", "#{libexec}/openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework", remove_destination: true
     puts "Here2"
   end
 
