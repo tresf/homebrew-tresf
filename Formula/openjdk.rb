@@ -39,8 +39,8 @@ class Openjdk < Formula
     boot_jdk_dir = Pathname.pwd/"boot-jdk"
     resource("boot-jdk").stage boot_jdk_dir
     boot_jdk = boot_jdk_dir/"Contents/Home"
-    frameworks = File.expand_path("#{`xcode-select --print-path`}/../SharedFrameworks/ContentDeliveryServices.framework/Versions/Current/itms/java/Frameworks/")
-    jnf_framework = frameworks/"JavaNativeFoundation.framework"
+    frameworks = File.expand_path("#{`xcode-select --print-path`}/../SharedFrameworks/ContentDeliveryServices.framework/Versions/Current/itms/java/Frameworks")
+    jnf_framework = "#{frameworks}/JavaNativeFoundation.framework"
 
     java_options = ENV.delete("_JAVA_OPTIONS")
     
@@ -88,7 +88,7 @@ class Openjdk < Formula
   end
   
   def post_install
-    # Copy after install to avoid apply_ad_hoc_signature
+    # post_install avoids signature corruption
     FileUtils.copy_entry jnf_framework, "#{libexec}/openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework"
   end
 
