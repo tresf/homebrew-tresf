@@ -85,7 +85,10 @@ class Openjdk < Formula
     bin.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/bin/*"]
     include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/*.h"]
     include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/darwin/*.h"]
-    
+  end
+  
+  def post_install
+    # Copy after install to avoid apply_ad_hoc_signature
     FileUtils.copy_entry jnf_framework, "#{libexec}/openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework"
   end
 
