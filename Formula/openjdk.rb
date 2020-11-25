@@ -34,14 +34,24 @@ class Openjdk < Formula
       sha256 "91310200f072045dc6cef2c8c23e7e6387b37c46e9de49623ce0fa461a24623d"
     end
   end
-
+  
+  resource "jnf-framework" do
+    # Stop-gap from https://github.com/apple/openjdk/blob/da09ed7a30a557417d4b09e90e09964444a545a0/build.sh#L32
+    url "https://github.com/Homebrew/brew/files/5593429/JavaNativeFoundation.framework.zip"
+    sha256 "6d592aa74f25ec44f28523982311aca5a213eb473bdb01ec941559c4026db4d8"
+  end
+  
   def install
     boot_jdk_dir = Pathname.pwd/"boot-jdk"
     resource("boot-jdk").stage boot_jdk_dir
     boot_jdk = boot_jdk_dir/"Contents/Home"
-    java_options = ENV.delete("_JAVA_OPTIONS")
-    framework = File.expand_path("#{`xcode-select --print-path`}../../SharedFrameworks/ContentDeliveryServices.framework/Versions/A/itms/java/Frameworks/JavaNativeFoundation.framework")
+    framework_dir = Pathname.pwd/"jnf-framework"
+    resource("jnf-framework").stage framework_dir
+    framework = framework_dir/"JavaNativeFoundation.framework"
 
+
+    java_options = ENV.delete("_JAVA_OPTIONS")
+    
     # Inspecting .hgtags to find a build number
     # The file looks like this:
     #
@@ -84,7 +94,7 @@ class Openjdk < Formula
     include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/*.h"]
     include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/darwin/*.h"]
     
-    FileUtils.copy_entry "#{framework}", "#{libexec}/openjdk.jdk/Contents/Home/lib/"
+    FileUtils.copy_entry framework, "#{libexec}/openjdk.jdk/Contents/Home/lib/"
   end
 
   def caveats
