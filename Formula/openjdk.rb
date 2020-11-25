@@ -34,19 +34,12 @@ class Openjdk < Formula
       sha256 "91310200f072045dc6cef2c8c23e7e6387b37c46e9de49623ce0fa461a24623d"
     end
   end
-  
-  resource "jnf-framework" do
-    # Stop-gap from https://github.com/apple/openjdk/blob/da09ed7a30a557417d4b09e90e09964444a545a0/build.sh#L32
-    url "https://github.com/Homebrew/brew/files/5593808/JavaNativeFoundation.framework.zip"
-    sha256 "4e66440df589714ca1445a589ed3e80844ff1197eb96b90cbe36b0df8078bf97"
-  end
-  
+
   def install
     boot_jdk_dir = Pathname.pwd/"boot-jdk"
     resource("boot-jdk").stage boot_jdk_dir
     boot_jdk = boot_jdk_dir/"Contents/Home"
-    frameworks = Pathname.pwd/"Frameworks"
-    resource("jnf-framework").stage frameworks
+    frameworks = File.expand_path("#{`xcode-select --print-path`}../../SharedFrameworks/ContentDeliveryServices.framework/Versions/Current/itms/java/Frameworks/")
     jnf_framework = frameworks/"JavaNativeFoundation.framework"
 
     java_options = ENV.delete("_JAVA_OPTIONS")
