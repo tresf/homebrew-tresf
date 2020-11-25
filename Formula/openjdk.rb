@@ -45,10 +45,8 @@ class Openjdk < Formula
     boot_jdk_dir = Pathname.pwd/"boot-jdk"
     resource("boot-jdk").stage boot_jdk_dir
     boot_jdk = boot_jdk_dir/"Contents/Home"
-    framework_dir = Pathname.pwd/"jnf-framework"
-    resource("jnf-framework").stage framework_dir
-    framework = framework_dir/"JavaNativeFoundation.framework"
-
+    framework = Pathname.pwd/"JavaNativeFoundation.framework"
+    resource("jnf-framework").stage framework
 
     java_options = ENV.delete("_JAVA_OPTIONS")
     
