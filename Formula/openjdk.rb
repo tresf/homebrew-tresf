@@ -92,7 +92,7 @@ class Openjdk < Formula
   def post_install
     # post_install avoids signature corruption
     puts "Here1"
-    puts $jnf_framework
+    puts get_framework()
     libexec.install "#{get_framework()}/JavaNativeFoundation.framework" => "openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework"
     puts "Here2"
   end
