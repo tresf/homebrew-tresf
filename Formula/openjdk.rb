@@ -36,6 +36,7 @@ class Openjdk < Formula
   end
   
   def get_framework
+    puts "#{MacOS::Xcode.prefix.to_s}/../SharedFrameworks/ContentDeliveryServices.framework/Versions/Current/itms/java/Frameworks"
     File.expand_path("#{MacOS::Xcode.prefix.to_s}/../SharedFrameworks/ContentDeliveryServices.framework/Versions/Current/itms/java/Frameworks")
   end
 
