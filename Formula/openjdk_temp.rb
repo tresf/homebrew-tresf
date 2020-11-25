@@ -1,9 +1,15 @@
 class Openjdk < Formula
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.java.net/"
-  url "https://github.com/openjdk/jdk-sandbox/archive/a56ddad05cf1808342aeff1b1cd2b0568a6cdc3a.tar.gz"
-  version "16"
-  sha256 "29df31b5eefb5a6c016f50b2518ca29e8e61e3cfc676ed403214e1f13a78efd5"
+  # Apple Silicon requires WIP JEP-391 fork from openjdk/jdk-sandbox
+  if OS.mac && Hardware::CPU.arm?
+    url "https://github.com/openjdk/jdk-sandbox/archive/a56ddad05cf1808342aeff1b1cd2b0568a6cdc3a.tar.gz"
+    version "16"
+    sha256 "29df31b5eefb5a6c016f50b2518ca29e8e61e3cfc676ed403214e1f13a78efd5"
+  else
+    url "https://hg.openjdk.java.net/jdk-updates/jdk15u/archive/jdk-15.0.1-ga.tar.bz2"
+    sha256 "9c5be662f5b166b5c82c27de29b71f867cff3ff4570f4c8fa646490c4529135a"
+  end
   license :cannot_represent
 
   bottle do
@@ -26,21 +32,59 @@ class Openjdk < Formula
   # From https://jdk.java.net/archive/
   resource "boot-jdk" do
     on_macos do
-      url "https://download.java.net/java/early_access/jdk16/25/GPL/openjdk-16-ea+25_osx-x64_bin.tar.gz"
-      sha256 "e08a359771834d0f298f9b08672328758985743d0feefdf4b705a2d6218fecff"
+      # Apple Silicon requires v15 or v16 boot-jdk
+      if Hardware::CPU.arm?
+        url "https://download.java.net/java/early_access/jdk16/25/GPL/openjdk-16-ea+25_osx-x64_bin.tar.gz"
+        sha256 "e08a359771834d0f298f9b08672328758985743d0feefdf4b705a2d6218fecff"
+      else
+        url "https://download.java.net/java/GA/jdk14.0.2/205943a0976c4ed48cb16f1043c5c647/12/GPL/openjdk-14.0.2_osx-x64_bin.tar.gz"
+        sha256 "386a96eeef63bf94b450809d69ceaa1c9e32a97230e0a120c1b41786b743ae84"
+      end
     end
     on_linux do
       url "https://download.java.net/java/GA/jdk14.0.2/205943a0976c4ed48cb16f1043c5c647/12/GPL/openjdk-14.0.2_linux-x64_bin.tar.gz"
       sha256 "91310200f072045dc6cef2c8c23e7e6387b37c46e9de49623ce0fa461a24623d"
     end
   end
+  
+  # Calculate JavaNativeFoundation.framework path
+  def get_framework
+    File.expand_path("../SharedFrameworks/ContentDeliveryServices.framework/Versions/Current/itms/java/Frameworks", MacOS::Xcode.prefix)
+  end
+  
+  def configure_args
+    args = %W[
+      --without-version-pre
+      --without-version-opt
+      --with-version-build=#{build}
+      --with-toolchain-path=/usr/bin
+      --with-sysroot=#{MacOS.sdk_path}
+      --with-extra-ldflags=-headerpad_max_install_names
+      --with-boot-jdk=#{boot_jdk}
+      --with-boot-jdk-jvmargs=#{java_options}
+      --with-build-jdk=#{boot_jdk}
+      --with-debug-level=release
+      --with-native-debug-symbols=none
+      --enable-dtrace
+      --with-jvm-variants=server
+    ]
+    on_macos do
+      if Hardware::CPU.arm?
+        args += %W[
+          --disable-warnings-as-errors
+          --openjdk-target=aarch64-apple-darwin
+          --with-extra-cflags=-arch arm64
+          --with-extra-ldflags=-arch arm64 -F#{get_framework()}
+          --with-extra-cxxflags=-arch arm64]
+      end
+    end
+    args
+  end
 
   def install
     boot_jdk_dir = Pathname.pwd/"boot-jdk"
     resource("boot-jdk").stage boot_jdk_dir
     boot_jdk = boot_jdk_dir/"Contents/Home"
-    frameworks = File.expand_path("#{`xcode-select --print-path`}/../SharedFrameworks/ContentDeliveryServices.framework/Versions/Current/itms/java/Frameworks")
-    jnf_framework = "#{frameworks}/JavaNativeFoundation.framework"
 
     java_options = ENV.delete("_JAVA_OPTIONS")
     
@@ -58,24 +102,7 @@ class Openjdk < Formula
     raise "cannot find build number in .hgtags" if build.nil?
 
     chmod 0755, "configure"
-    system "./configure", "--without-version-pre",
-                          "--without-version-opt",
-                          "--with-version-build=#{build}",
-                          "--with-toolchain-path=/usr/bin",
-                          "--with-sysroot=#{MacOS.sdk_path}",
-                          "--with-extra-ldflags=-headerpad_max_install_names",
-                          "--with-boot-jdk=#{boot_jdk}",
-                          "--with-boot-jdk-jvmargs=#{java_options}",
-                          "--with-build-jdk=#{boot_jdk}",
-                          "--with-debug-level=slowdebug", #FIXME
-                          "--with-native-debug-symbols=none",
-                          "--enable-dtrace",
-                          "--with-jvm-variants=server",
-                          "--disable-warnings-as-errors",
-                          "--openjdk-target=aarch64-apple-darwin",
-                          "--with-extra-cflags=-arch arm64",
-                          "--with-extra-ldflags=-arch arm64 -F#{frameworks}",
-                          "--with-extra-cxxflags=-arch arm64"
+    system "./configure", *configure_args
 
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
     system "make", "images"
@@ -88,8 +115,12 @@ class Openjdk < Formula
   end
   
   def post_install
-    # post_install avoids signature corruption
-    FileUtils.copy_entry jnf_framework, "#{libexec}/openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework"
+    on_macos do
+      # Apple Silicon requires JavaNativeFoundation.framework from Xcode after install to avoid signature corruption
+      if Hardware::CPU.arm?
+        FileUtils.cp_r "#{get_framework()}/JavaNativeFoundation.framework", "#{libexec}/openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework", remove_destination: true
+      end
+    end
   end
 
   def caveats
