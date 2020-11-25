@@ -93,7 +93,7 @@ class Openjdk < Formula
     include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/*.h"]
     include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/darwin/*.h"]
     
-    FileUtils.copy_entry jnf_framework, "#{libexec}/openjdk.jdk/Contents/Home/lib/"
+    FileUtils.copy_entry jnf_framework, "#{libexec}/openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework"
   end
 
   def caveats
