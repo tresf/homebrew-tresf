@@ -91,10 +91,7 @@ class Openjdk < Formula
   
   def post_install
     # post_install avoids signature corruption
-    puts "Here1"
-    puts get_framework()
     FileUtils.cp_r "#{get_framework()}/JavaNativeFoundation.framework", "#{libexec}/openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework", remove_destination: true
-    puts "Here2"
   end
 
   def caveats
