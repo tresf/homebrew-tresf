@@ -89,7 +89,9 @@ class Openjdk < Formula
   
   def post_install
     # post_install avoids signature corruption
-    libexec.install $jnf_framework => "#{libexec}/openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework"
+    puts "Here1"
+    libexec.install $jnf_framework => "openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework"
+    puts "Here2"
   end
 
   def caveats
