@@ -80,9 +80,9 @@ class Openjdk < Formula
                           "--with-jvm-variants=server",
                           "--disable-warnings-as-errors",
                           "--openjdk-target=aarch64-apple-darwin",
-                          "--with-extra-cflags=-arch arm64 -F#{frameworks}",
+                          "--with-extra-cflags=-arch arm64",
                           "--with-extra-ldflags=-arch arm64 -F#{frameworks}",
-                          "--with-extra-cxxflags=-arch arm64 -F#{frameworks}"
+                          "--with-extra-cxxflags=-arch arm64"
 
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
     system "make", "images"
