@@ -75,7 +75,6 @@ class Openjdk < Formula
                           "--with-boot-jdk-jvmargs=#{java_options}",
                           "--with-build-jdk=#{boot_jdk}",
                           "--with-debug-level=slowdebug", #FIXME
-                          "--with-num-cores=8", #FIXME
                           "--with-native-debug-symbols=none",
                           "--enable-dtrace",
                           "--with-jvm-variants=server",
