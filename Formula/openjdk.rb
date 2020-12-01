@@ -18,7 +18,7 @@ class Openjdk < Formula
 
   on_macos do
     # Apple Silicon requires newer formula
-    depends_on "openjdk@16" if Hardware::CPU.arm?
+    depends_on "tresf/tresf/openjdk@16" if Hardware::CPU.arm?
   end
 
   depends_on "autoconf" => :build
