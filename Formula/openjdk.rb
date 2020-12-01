@@ -55,6 +55,11 @@ class Openjdk < Formula
   end
 
   def install
+    # Apple Silicon installs openjdk@16 instead
+    on_macos do
+      exit 0 if Hardware::CPU.arm?
+    end
+
     boot_jdk_dir = Pathname.pwd/"boot-jdk"
     resource("boot-jdk").stage boot_jdk_dir
     boot_jdk = boot_jdk_dir/"Contents/Home"
