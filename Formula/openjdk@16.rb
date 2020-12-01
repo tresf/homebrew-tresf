@@ -1,4 +1,4 @@
-class Openjdk < Formula
+class OpenjdkAT16 < Formula
   # This isn't openjdk@16, but rather openjdk@16 with the JEP-391 patches from sandbox repo
   # as a stop-gap solution for Apple Silicon
   desc "Development kit for the Java programming language"
