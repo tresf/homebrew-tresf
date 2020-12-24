@@ -1,25 +1,17 @@
 class Openjdk < Formula
+  # TODO: Update GA archive when JEP391 is merged
   desc "Development kit for the Java programming language"
   homepage "https://openjdk.java.net/"
-  url "https://hg.openjdk.java.net/jdk-updates/jdk15u/archive/jdk-15.0.1-ga.tar.bz2"
-  sha256 "9c5be662f5b166b5c82c27de29b71f867cff3ff4570f4c8fa646490c4529135a"
+  url "https://github.com/openjdk/jdk-sandbox/archive/a56ddad05cf1808342aeff1b1cd2b0568a6cdc3a.tar.gz"
+  version "16"
+  sha256 "29df31b5eefb5a6c016f50b2518ca29e8e61e3cfc676ed403214e1f13a78efd5"
   license :cannot_represent
 
   bottle do
     cellar :any
-    sha256 "6f31366f86a5eacf66673fca9ad647b98b207820f8cfea49a22af596395d3dba" => :big_sur
-    sha256 "9376a1c6fdf8b0268b6cb56c9878358df148b530fcb0e3697596155fad3ca8d7" => :catalina
-    sha256 "a4f00dc8b4c69bff53828f32c82b0a6be41b23a69a7775a95cdbc9e01d9bdb68" => :mojave
-    sha256 "bef2e4a43a6485253c655979cfc719332fb8631792720c0b9f6591559fb513f1" => :high_sierra
   end
 
   keg_only "it shadows the macOS `java` wrapper"
-
-
-  on_macos do
-    # Apple Silicon requires newer formula
-    depends_on "tresf/tresf/openjdk@16" if Hardware::CPU.arm?
-  end
 
   depends_on "autoconf" => :build
 
@@ -28,84 +20,117 @@ class Openjdk < Formula
     depends_on "alsa-lib"
   end
 
-  # From https://jdk.java.net/archive/
+  # From https://jdk.java.net/
+  # http://openjdk.java.net/groups/build/doc/building.html#boot-jdk-requirements
+  # TODO: Determine if N-1 is advised in a future release
+  #   e.g. "configure: (Your Build JDK must be version 16)"
   resource "boot-jdk" do
     on_macos do
-      url "https://download.java.net/java/GA/jdk14.0.2/205943a0976c4ed48cb16f1043c5c647/12/GPL/openjdk-14.0.2_osx-x64_bin.tar.gz"
-      sha256 "386a96eeef63bf94b450809d69ceaa1c9e32a97230e0a120c1b41786b743ae84"
+      url "https://download.java.net/java/early_access/jdk16/26/GPL/openjdk-16-ea+26_osx-x64_bin.tar.gz"
+      sha256 "85a6bb4f73c1b7ab64cb044b368581d0c72eefed2142a06b143f62f0e4325353"
     end
     on_linux do
-      url "https://download.java.net/java/GA/jdk14.0.2/205943a0976c4ed48cb16f1043c5c647/12/GPL/openjdk-14.0.2_linux-x64_bin.tar.gz"
-      sha256 "91310200f072045dc6cef2c8c23e7e6387b37c46e9de49623ce0fa461a24623d"
+      url "https://download.java.net/java/early_access/jdk16/26/GPL/openjdk-16-ea+26_linux-x64_bin.tar.gz"
+      sha256 "e74300f3f770122358d768d45e181d29c710e8d41bbc4ab8e492929f2867347c"
     end
   end
 
-  # Fix build on Xcode 12
-  # https://bugs.openjdk.java.net/browse/JDK-8253375
-  patch do
-    url "https://github.com/openjdk/jdk/commit/f80a6066e45c3d53a61715abfe71abc3b2e162a1.patch?full_index=1"
-    sha256 "5320e5e8db5f94432925d7c240f41c12b10ff9a0afc2f7a8ab0728a114c43cdb"
-  end
-
-  # Fix build on Xcode 12
-  # https://bugs.openjdk.java.net/browse/JDK-8253791
-  patch do
-    url "https://github.com/openjdk/jdk/commit/4622a18a72c30c4fc72c166bee7de42903e1d036.patch?full_index=1"
-    sha256 "4e4448a5bf68843c21bf96f510ea270aa795c5fac41fd9088f716822788d0f57"
+  # Calculate Xcode's dual-arch JavaNativeFoundation.framework path
+  def framework_path
+    File.expand_path("../SharedFrameworks/ContentDeliveryServices.framework/Versions/Current/itms/java/Frameworks",
+      MacOS::Xcode.prefix)
   end
 
   def install
-    # Apple Silicon installs openjdk@16 instead
-    on_macos do
-      exit 0 if Hardware::CPU.arm?
-    end
-
     boot_jdk_dir = Pathname.pwd/"boot-jdk"
     resource("boot-jdk").stage boot_jdk_dir
-    boot_jdk = boot_jdk_dir/"Contents/Home"
+    boot_jdk = boot_jdk_dir.to_s
+
+    on_macos do
+      boot_jdk += "/Contents/Home"
+    end
+
     java_options = ENV.delete("_JAVA_OPTIONS")
 
-    # Inspecting .hg_archival.txt to find a build number
+    # Inspecting .hgtags to find a build number
     # The file looks like this:
     #
-    # repo: fd16c54261b32be1aaedd863b7e856801b7f8543
-    # node: e3f940bd3c8fcdf4ca704c6eb1ac745d155859d5
-    # branch: default
-    # tag: jdk-15+36
-    # tag: jdk-15-ga
+    # fd07cdb26fc70243ef23d688b545514f4ddf1c2b jdk-16+13
+    # 36b29df125dc88f11657ce93b4998aa9ff5f5d41 jdk-16+14
     #
-    # Since openjdk has move their development from mercurial to git and GitHub
-    # this approach may need some changes in the future
-    #
-    build = File.read(".hg_archival.txt")
-                .scan(/^tag: jdk-#{version}\+(.+)$/)
+    build = File.read(".hgtags")
+                .scan(/ jdk-#{version}\+(.+)$/)
                 .map(&:first)
                 .map(&:to_i)
                 .max
-    raise "cannot find build number in .hg_archival.txt" if build.nil?
+    raise "cannot find build number in .hgtags" if build.nil?
+
+    configure_args = %W[
+      --without-version-pre
+      --without-version-opt
+      --with-version-build=#{build}
+      --with-toolchain-path=/usr/bin
+      --with-boot-jdk=#{boot_jdk}
+      --with-boot-jdk-jvmargs=#{java_options}
+      --with-build-jdk=#{boot_jdk}
+      --with-debug-level=release
+      --with-native-debug-symbols=none
+      --with-jvm-variants=server
+    ]
+    on_macos do
+      configure_args += %W[
+        --with-sysroot=#{MacOS.sdk_path}
+        --with-extra-ldflags=-headerpad_max_install_names
+        --enable-dtrace
+      ]
+
+      if Hardware::CPU.arm?
+        configure_args += %W[
+          --disable-warnings-as-errors
+          --openjdk-target=aarch64-apple-darwin
+          --with-extra-cflags=-arch\ arm64
+          --with-extra-ldflags=-arch\ arm64\ -F#{framework_path}
+          --with-extra-cxxflags=-arch\ arm64
+        ]
+      end
+    end
 
     chmod 0755, "configure"
-    system "./configure", "--without-version-pre",
-                          "--without-version-opt",
-                          "--with-version-build=#{build}",
-                          "--with-toolchain-path=/usr/bin",
-                          "--with-sysroot=#{MacOS.sdk_path}",
-                          "--with-extra-ldflags=-headerpad_max_install_names",
-                          "--with-boot-jdk=#{boot_jdk}",
-                          "--with-boot-jdk-jvmargs=#{java_options}",
-                          "--with-debug-level=release",
-                          "--with-native-debug-symbols=none",
-                          "--enable-dtrace",
-                          "--with-jvm-variants=server"
+    system "./configure", *configure_args
 
     ENV["MAKEFLAGS"] = "JOBS=#{ENV.make_jobs}"
     system "make", "images"
 
-    jdk = Dir["build/*/images/jdk-bundle/*"].first
-    libexec.install jdk => "openjdk.jdk"
-    bin.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/bin/*"]
-    include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/*.h"]
-    include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/darwin/*.h"]
+    on_macos do
+      jdk = Dir["build/*/images/jdk-bundle/*"].first
+      libexec.install jdk => "openjdk.jdk"
+      bin.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/bin/*"]
+      include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/*.h"]
+      include.install_symlink Dir["#{libexec}/openjdk.jdk/Contents/Home/include/darwin/*.h"]
+    end
+
+    on_linux do
+      jdk = Dir["build/*/jdk"].first
+      libexec.install jdk => "openjdk.jdk"
+      mkdir_p libexec/"support"
+      modules = Dir["build/*/support/modules_libs"].first
+      libexec.install modules => "support/modules_libs"
+      bin.install_symlink Dir["#{libexec}/openjdk.jdk/bin/*"]
+      lib.install_symlink Dir["#{libexec}/openjdk.jdk/lib/*"]
+      include.install_symlink Dir["#{libexec}/openjdk.jdk/include/*.h"]
+      include.install_symlink Dir["#{libexec}/openjdk.jdk/include/linux/*.h"]
+    end
+  end
+
+  def post_install
+    on_macos do
+      # Copy JavaNativeFoundation.framework from Xcode after install to avoid signature corruption
+      if Hardware::CPU.arm?
+        cp_r "#{framework_path}/JavaNativeFoundation.framework",
+          "#{libexec}/openjdk.jdk/Contents/Home/lib/JavaNativeFoundation.framework",
+          remove_destination: true
+      end
+    end
   end
 
   def caveats
