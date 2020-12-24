@@ -26,12 +26,12 @@ class Openjdk < Formula
   #   e.g. "configure: (Your Build JDK must be version 16)"
   resource "boot-jdk" do
     on_macos do
-      url "https://download.java.net/java/early_access/jdk16/26/GPL/openjdk-16-ea+26_osx-x64_bin.tar.gz"
-      sha256 "85a6bb4f73c1b7ab64cb044b368581d0c72eefed2142a06b143f62f0e4325353"
+      url "https://download.java.net/java/early_access/jdk16/29/GPL/openjdk-16-ea+29_osx-x64_bin.tar.gz"
+      sha256 "f2f99ddc9faf2caf583043828104a67b88af73d010521aa1818d54ac850a932e"
     end
     on_linux do
-      url "https://download.java.net/java/early_access/jdk16/26/GPL/openjdk-16-ea+26_linux-x64_bin.tar.gz"
-      sha256 "e74300f3f770122358d768d45e181d29c710e8d41bbc4ab8e492929f2867347c"
+      url "https://download.java.net/java/early_access/jdk16/29/GPL/openjdk-16-ea+29_linux-x64_bin.tar.gz"
+      sha256 "484b901cea7c2b6fafea3a4215028f12f225c17807d5413a2d52edcd604ef6ec"
     end
   end
 
